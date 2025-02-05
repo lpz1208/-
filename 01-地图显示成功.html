@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧校园</title>
+    <link rel="stylesheet" href="https://a.amap.com/jsapi_demos/static/demo-center/css/demo-center.css" />
+    <!-- 添加store.js引用 -->
+    <script src="./js/store.js"></script>
+    
+        <!-- 添加地图容器样式 -->
+        <style>
+            #container {
+                width: 100%;
+                height: 100vh; /* 设置高度为视口高度 */
+            }
+        </style>
+        
+</head>
+<body>
+    
+
+    <!-- 地图容器 -->
+    <div id="container"></div>
+    <div class="info">热门地点</div>
+    <div class="input-card">
+        <h4>推荐浏览的路线</h4>
+        <div class="input-item">
+            <button class="btn" onclick="startNavigation()">开始导航</button>
+        </div>
+    </div>
+    
+    <!-- 安全密钥配置 -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: "041e0a5d9fde74ae38b813e57333806b",
+        };
+    </script>
+    
+    <!-- 引入高德地图JS API -->
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=b2362819e46ff19e5a69dd90af9a0d3d"></script>
+    
+    <!-- 初始化地图 -->
+    <script>
+        // 创建地图实例
+        var map = new AMap.Map('container', {
+            zoom: 17,                         // 初始化地图层级
+            center: [114.402672, 30.518987],  // 初始化地图中心点
+            viewMode: '3D',                     // 使用3D视图
+            pitch: 50,                         // 地图俯仰角度，有效范围 0 度- 83 度
+        });
+
+        // 初始化GeoJSON图层
+        var geojsonLayer;
+        
+        // 使用控件和GeoJSON插件
+        AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.ControlBar', 'AMap.GeoJSON'], function(){
+            map.addControl(new AMap.ToolBar({
+                position:{
+                    top: '80px',
+                    right: '40px'
+                }
+            }));
+            map.addControl(new AMap.Scale());
+            map.addControl(new AMap.ControlBar());
+            
+            // 创建GeoJSON图层并加载已保存的数据
+            geojsonLayer = new AMap.GeoJSON({
+                geoJSON: {
+                    type: 'FeatureCollection',
+                    features: getData() || []
+                },
+                getMarker: function(geojson, lnglat) {
+                    return new AMap.Marker({
+                        position: lnglat,
+                        anchor: 'bottom-center',
+                        icon: new AMap.Icon({
+                            size: new AMap.Size(25, 34),
+                            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                            imageSize: new AMap.Size(25, 34)
+                        })
+                    });
+                }
+            });
+            map.add(geojsonLayer);
+        });
+
+        // 监听地图点击事件
+        map.on('click', function(e) {
+            // 创建新的GeoJSON要素
+            var feature = {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                    type: 'Point',
+                    coordinates: [e.lnglat.getLng(), e.lnglat.getLat()]
+                }
+            };
+            
+            // 获取现有数据并添加新要素
+            var data = getData() || [];
+            data.push(feature);
+            
+            // 保存数据
+            saveData(data);
+            
+            // 更新地图显示
+            geojsonLayer.importData({
+                type: 'FeatureCollection',
+                features: data
+            });
+        });
+
+        // 创建导航实例
+        var opts = {
+            waypoints: []  // 存储途经点
+        };
+
+        // 设置起点和终点
+        var start = new AMap.LngLat(114.400984, 30.518653);  // 起点
+        var end = new AMap.LngLat(114.404755, 30.523851);    // 终点
+
+        // 收集途经点
+        geojsonLayer.eachOverlay(function(item) {
+            opts.waypoints.push(item.getPosition());
+        });
+
+        // 开始导航
+        function startNavigation() {
+            AMap.plugin('AMap.Driving', function() {
+                var driving = new AMap.Driving({
+                    map: map,
+                    policy: AMap.DrivingPolicy.LEAST_TIME, // 最快路线
+                    showTraffic: true,  // 显示路况
+                    autoFitView: true   // 自动调整视野
+                });
+                
+                // 搜索路线
+                driving.search(start, end, {
+                    waypoints: opts.waypoints  // 添加途经点
+                }, function(status, result) {
+                    if (status === 'complete') {
+                        console.log('路线规划成功');
+                        // 获取路线信息
+                        var routes = result.routes;
+                        var distance = routes[0].distance;  // 获取距离
+                        var time = routes[0].time;         // 获取时间
+                        console.log('总距离：' + distance + '米');
+                        console.log('预计用时：' + (time/60).toFixed(1) + '分钟');
+
+                        console.log(result);
+                        var lineArr = [];
+                        result.routes[0].steps.forEach(function (item) {
+                            lineArr.push;
+                        });
+
+                        var marker =new AMap.Marker({
+                            position: start,
+                            map: map,
+                            icon: 'https://webapi.amap.com/images/car.png',
+                            offset: new AMap.Pixel(-13, -30),
+                            autoRotation: true,
+                            angle:180
+                        });
+
+                        var passedPolyline=new AMap.Polyline({
+                            map: map,
+                            strokeColor: "#00A",  //线颜色
+                            strokeOpacity: 1,     //线透明度
+                            isOutline: true,
+                            outlineColor: '#f00',
+                            borderWeight: 2,})
+
+                            maeker.on('moving',function(e){
+                                passedPolyline.setPath(e.passedPath);
+                            });
+
+                            map.setFitview();
+
+                            marker.moveAlong(lineArr,{
+                                during:500,
+                                autoRotation:true,
+                            })
+                    } else {
+                        console.error('路线规划失败：' + result);
+                    }
+                });
+            });
+        }
+    </script>
+</body> 
+</html>
